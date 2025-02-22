@@ -34,7 +34,7 @@ public:
     void transpose();
     bool hasCycle();
     std::vector<int> topologicalSort();
-    std::vector<std::vector<int>> getSCC();
+    std::vector<std::vector<int>> getSCCKosaraju();
 };
 
 template<bool directed = false>
@@ -60,12 +60,12 @@ public:
     void transpose();
     bool hasCycle();
     std::vector<int> topologicalSort();
-    std::vector<std::vector<int>> getSCC();
+    std::vector<std::vector<int>> getSCCKosaraju();
 };
 
 template<bool directed>
-std::vector<std::vector<int>> graphList<directed>::getSCC(){
-    static_assert(directed, "getSCC is not supported for undirected graphs"); 
+std::vector<std::vector<int>> graphList<directed>::getSCCKosaraju(){
+    static_assert(directed, "getSCCKosaraju is not supported for undirected graphs"); 
     int size = graph.size();
     std::stack<int> s;
     std::vector<bool> visited(size, false);
@@ -612,8 +612,8 @@ std::vector<int> graphMatrix<directed>::topologicalSort() {
 }
 
 template<bool directed>
-std::vector<std::vector<int>> graphMatrix<directed>::getSCC(){
-    static_assert(directed, "getSCC is not supported for undirected graphs"); 
+std::vector<std::vector<int>> graphMatrix<directed>::getSCCKosaraju(){
+    static_assert(directed, "getSCCKosaraju is not supported for undirected graphs"); 
     int size = graph.size();
     std::stack<int> s;
     std::vector<bool> visited(size, false);
