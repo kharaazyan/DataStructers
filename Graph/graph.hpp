@@ -15,8 +15,11 @@ template<bool directed = false>
 class graphList {
     std::vector<std::list<int>> graph;
     void _DFSUtil(int u, std::vector<bool>& visited);
+    void _DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack);
+    void _DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component);
     int _countPath(int cur, int dst, std::vector<bool>& visited);
     bool _hasCycle(int u, int parent, std::vector<bool>& visited);
+    std::vector<std::vector<int>> _transpose();
 public:
     graphList() = default;
     graphList(int size);
@@ -31,14 +34,18 @@ public:
     void transpose();
     bool hasCycle();
     std::vector<int> topologicalSort();
+    std::vector<std::vector<int>> getSCC();
 };
 
 template<bool directed = false>
 class graphMatrix{
     std::vector<std::vector<int>> graph;
     void _DFSUtil(int u, std::vector<bool>& visited);
+    void _DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack);
+    void _DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component);
     int _countPath(int cur, int dst, std::vector<bool>& visited);
     bool _hasCycle(int u, int parent, std::vector<bool>& visited);
+    std::vector<std::vector<int>> _transpose();
 public:
     graphMatrix() = default;;
     graphMatrix(int size);
@@ -53,7 +60,34 @@ public:
     void transpose();
     bool hasCycle();
     std::vector<int> topologicalSort();
+    std::vector<std::vector<int>> getSCC();
 };
+
+template<bool directed>
+std::vector<std::vector<int>> graphList<directed>::getSCC(){
+    static_assert(directed, "getSCC is not supported for undirected graphs"); 
+    int size = graph.size();
+    std::stack<int> s;
+    std::vector<bool> visited(size, false);
+
+    for(int u = 0; u < size; ++u){
+        if(!visited[u]) _DFSUtil(u, visited, s);
+    }
+
+    std::vector<std::vector<int>> g = _transpose();
+    std::fill(visited.begin(), visited.end(), false);
+    std::vector<std::vector<int>> scc;
+    while(!s.empty()){
+        int u = s.top();
+        s.pop();
+        if(!visited[u]){
+            std::vector<int> component;
+            _DFSUtil(g, u, visited, component);
+            scc.push_back(component);
+        }
+    }
+    return scc;
+}
 
 template<bool directed>
 graphList<directed>::graphList(int size) {
@@ -127,16 +161,39 @@ void graphList<directed>::_DFSUtil(int u, std::vector<bool>& visited) {
 }
 
 template<bool directed>
-void graphList<directed>::transpose() {
-    static_assert(directed, "transpose is not supported for undirected graphs"); 
+void graphList<directed>::_DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack) {
+    visited[u] = true;
+    for(int v : graph[u]){
+        if(!visited[v]) _DFSUtil(v, visited, stack);
+    }
+    stack.push(u);
+}
+
+template<bool directed>
+void graphList<directed>::_DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component) {
+    visited[u] = true;
+    component.push_back(u);
+    for(int v : gr[u]){
+        if(!visited[v]) _DFSUtil(gr, v, visited, component);
+    }
+}
+
+template<bool directed>
+std::vector<std::vector<int>> graphList<directed>::_transpose() {
     int size = graph.size();
-    decltype(graph) newGraph(size);
+    std::vector<std::vector<int>> newGraph(size);   
     for (int u = 0; u < size; ++u) {
         for (int v : graph[u]) {
             newGraph[v].push_back(u);
         }
     }
-    graph = std::move(newGraph);
+    return newGraph;
+}
+
+template<bool directed>
+void graphList<directed>::transpose() {
+    static_assert(directed, "transpose is not supported for undirected graphs"); 
+    graph = std::move(_transpose());
 }
 
 template<bool directed>
@@ -309,6 +366,24 @@ void graphMatrix<directed>::_DFSUtil(int u, std::vector<bool>& visited) {
 }
 
 template<bool directed>
+void graphMatrix<directed>::_DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack) {
+    visited[u] = true;
+    for(int v : graph[u]){
+        if(!visited[v]) _DFSUtil(v, visited, stack);
+    }
+    stack.push(u);
+}
+
+template<bool directed>
+void graphMatrix<directed>::_DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component) {
+    visited[u] = true;
+    component.push_back(u);
+    for(int v : gr[u]){
+        if(!visited[v]) _DFSUtil(gr, v, visited, component);
+    }
+}
+
+template<bool directed>
 void graphMatrix<directed>::addVertex() {
     graph.push_back({});
 }
@@ -463,16 +538,21 @@ void graphMatrix<directed>::printGraph() const {
 }
 
 template<bool directed>
-void graphMatrix<directed>::transpose() {
-    static_assert(directed, "transpose is not supported for undirected graphs"); 
+std::vector<std::vector<int>> graphMatrix<directed>::_transpose() {
     int size = graph.size();
-    decltype(graph) newGraph(size);
+    std::vector<std::vector<int>> newGraph(size);
     for (int u = 0; u < size; ++u) {
         for (int v : graph[u]) {
             newGraph[v].push_back(u);
         }
     }
-    graph = std::move(newGraph);
+    return newGraph;
+}
+
+template<bool directed>
+void graphMatrix<directed>::transpose() {
+    static_assert(directed, "transpose is not supported for undirected graphs"); 
+    graph = std::move(_transpose());
 }
 
 template<bool directed>
@@ -529,6 +609,32 @@ std::vector<int> graphMatrix<directed>::topologicalSort() {
         throw std::runtime_error("Graph has at least one cycle");
     }
     return order;
+}
+
+template<bool directed>
+std::vector<std::vector<int>> graphMatrix<directed>::getSCC(){
+    static_assert(directed, "getSCC is not supported for undirected graphs"); 
+    int size = graph.size();
+    std::stack<int> s;
+    std::vector<bool> visited(size, false);
+
+    for(int u = 0; u < size; ++u){
+        if(!visited[u]) _DFSUtil(u, visited, s);
+    }
+
+    std::vector<std::vector<int>> g = _transpose();
+    std::fill(visited.begin(), visited.end(), false);
+    std::vector<std::vector<int>> scc;
+    while(!s.empty()){
+        int u = s.top();
+        s.pop();
+        if(!visited[u]){
+            std::vector<int> component;
+            _DFSUtil(g, u, visited, component);
+            scc.push_back(component);
+        }
+    }
+    return scc;
 }
 
 #endif // GRAPH_HPP
