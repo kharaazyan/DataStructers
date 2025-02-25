@@ -1,5 +1,5 @@
-#ifndef GRAPH_HPP
-#define GRAPH_HPP
+#ifndef GRAPH_WEIGHTED_HPP
+#define GRAPH_WEIGHTED_HPP
 
 #include <vector>
 #include <list>
@@ -12,19 +12,23 @@
 #define DIRECTED true
 
 template<bool directed = false>
-class graphList {
-    std::vector<std::list<int>> graph;
+class graphListWeighted {
+    std::vector<std::list<std::pair<int,int>>> graph;
+
     void _DFSUtil(int u, std::vector<bool>& visited);
     void _DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack);
-    void _DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component);
-    int _countPath(int cur, int dst, std::vector<bool>& visited);
+    void _DFSUtil(std::vector<std::vector<std::pair<int,int>>>& gr,
+                  int u, std::vector<bool>& visited, std::vector<int>& component);
+    int  _countPath(int cur, int dst, std::vector<bool>& visited);
     bool _hasCycle(int u, int parent, std::vector<bool>& visited);
-    std::vector<std::vector<int>> _transpose();
+    std::vector<std::vector<std::pair<int,int>>> _transpose();
+
 public:
-    graphList() = default;
-    graphList(int size);
+    graphListWeighted() = default;
+    graphListWeighted(int size);
+
     void addVertex();
-    void addEdge(int u, int v);
+    void addEdge(int u, int v, int w = 1);
     std::vector<int> getShortestPathBFS(int src, int dst);
     std::vector<int> getPathDFS(int src, int dest);
     int getNumberOfNodesAtAGivenLevel(int start, int levelTarget);
@@ -39,19 +43,23 @@ public:
 };
 
 template<bool directed = false>
-class graphMatrix{
-    std::vector<std::vector<int>> graph;
+class graphMatrixWeighted {
+    std::vector<std::vector<std::pair<int,int>>> graph;
+
     void _DFSUtil(int u, std::vector<bool>& visited);
     void _DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack);
-    void _DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component);
-    int _countPath(int cur, int dst, std::vector<bool>& visited);
+    void _DFSUtil(std::vector<std::vector<std::pair<int,int>>>& gr,
+                  int u, std::vector<bool>& visited, std::vector<int>& component);
+    int  _countPath(int cur, int dst, std::vector<bool>& visited);
     bool _hasCycle(int u, int parent, std::vector<bool>& visited);
-    std::vector<std::vector<int>> _transpose();
+    std::vector<std::vector<std::pair<int,int>>> _transpose();
+
 public:
-    graphMatrix() = default;;
-    graphMatrix(int size);
+    graphMatrixWeighted() = default;
+    graphMatrixWeighted(int size);
+
     void addVertex();
-    void addEdge(int u, int v);
+    void addEdge(int u, int v, int w = 1);
     std::vector<int> getShortestPathBFS(int src, int dst);
     std::vector<int> getPathDFS(int src, int dest);
     int getNumberOfNodesAtAGivenLevel(int start, int levelTarget);
@@ -66,7 +74,42 @@ public:
 };
 
 template<bool directed>
-std::vector<std::vector<int>> graphList<directed>::tarjanSCC(){
+graphListWeighted<directed>::graphListWeighted(int size) {
+    while(size-- > 0){
+        addVertex();
+    }
+}
+
+template<bool directed>
+void graphListWeighted<directed>::addVertex() {
+    graph.push_back({});
+}
+
+template<bool directed>
+void graphListWeighted<directed>::addEdge(int u, int v, int w) {
+    if(u >= 0 && u < graph.size() && v >= 0 && v < graph.size()) {
+        graph[u].push_back({v, w});
+        if constexpr (!directed) {
+            graph[v].push_back({u, w});
+        }
+    }
+}
+
+template<bool directed>
+void graphListWeighted<directed>::printGraph() const {
+    for (int i = 0; i < graph.size(); i++) {
+        std::cout << i << ": ";
+        for (auto &edge : graph[i]) {
+            int v = edge.first;
+            int w = edge.second;
+            std::cout << "(" << v << ", w=" << w << ") ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+template<bool directed>
+std::vector<std::vector<int>> graphListWeighted<directed>::tarjanSCC(){
     static_assert(directed, "tarjanSCC is not supported for undirected graphs"); 
     int size = graph.size();
     std::vector<bool> onStack(size, false);
@@ -81,12 +124,15 @@ std::vector<std::vector<int>> graphList<directed>::tarjanSCC(){
         onStack[u] = true;
         s.push(u);
 
-        for(int v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             if(index[v] == -1){
                 strongconnect(v);
                 lowLink[u] = std::min(lowLink[u], lowLink[v]);
             }
-            else if(onStack[v]) lowLink[u] = std::min(lowLink[u], index[v]);
+            else if(onStack[v]) {
+                lowLink[u] = std::min(lowLink[u], index[v]);
+            }
         }
 
         if(lowLink[u] == index[u]){
@@ -111,17 +157,20 @@ std::vector<std::vector<int>> graphList<directed>::tarjanSCC(){
 }
 
 template<bool directed>
-std::vector<std::vector<int>> graphList<directed>::kosarajuSCC(){
+std::vector<std::vector<int>> graphListWeighted<directed>::kosarajuSCC(){
     static_assert(directed, "kosarajuSCC is not supported for undirected graphs"); 
     int size = graph.size();
     std::stack<int> s;
     std::vector<bool> visited(size, false);
 
     for(int u = 0; u < size; ++u){
-        if(!visited[u]) _DFSUtil(u, visited, s);
+        if(!visited[u]) {
+            _DFSUtil(u, visited, s);
+        }
     }
 
-    std::vector<std::vector<int>> g = _transpose();
+    auto g = _transpose();
+
     std::fill(visited.begin(), visited.end(), false);
     std::vector<std::vector<int>> scc;
     while(!s.empty()){
@@ -137,22 +186,16 @@ std::vector<std::vector<int>> graphList<directed>::kosarajuSCC(){
 }
 
 template<bool directed>
-graphList<directed>::graphList(int size) {
-    while(size-- > 0){
-        addVertex();
-    }
-}
-
-template<bool directed>
-std::vector<int> graphList<directed>::topologicalSort() {
+std::vector<int> graphListWeighted<directed>::topologicalSort() {
     static_assert(directed, "topologicalSort is not supported for undirected graphs"); 
     int size = graph.size();
     std::queue<int> q;
-    std::vector<int>inDegree(size, 0);
+    std::vector<int> inDegree(size, 0);
     std::vector<int> order;
     
     for(int u = 0; u < size; ++u){
-        for(int v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             ++inDegree[v];
         }
     }
@@ -167,7 +210,8 @@ std::vector<int> graphList<directed>::topologicalSort() {
         q.pop();
         order.push_back(u);
 
-        for(int v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             if(--inDegree[v] == 0){
                 q.push(v);
             }
@@ -179,9 +223,10 @@ std::vector<int> graphList<directed>::topologicalSort() {
 }
 
 template<bool directed>
-bool graphList<directed>::_hasCycle(int u, int parent, std::vector<bool>& visited) {
+bool graphListWeighted<directed>::_hasCycle(int u, int parent, std::vector<bool>& visited) {
     visited[u] = true;
-    for(int v : graph[u]){
+    for(auto &edge : graph[u]){
+        int v = edge.first;
         if(v != parent){
             if(visited[v]) return true;
             if(_hasCycle(v, u, visited)) return true;   
@@ -191,68 +236,86 @@ bool graphList<directed>::_hasCycle(int u, int parent, std::vector<bool>& visite
 }
 
 template<bool directed>
-bool graphList<directed>::hasCycle() {
+bool graphListWeighted<directed>::hasCycle() {
     std::vector<bool> visited(graph.size(), false);
+    if(graph.empty()) return false;
     visited[0] = true;
     return _hasCycle(0, -1, visited);
 }
 
 template<bool directed>
-void graphList<directed>::_DFSUtil(int u, std::vector<bool>& visited) {
+void graphListWeighted<directed>::_DFSUtil(int u, std::vector<bool>& visited) {
     visited[u] = true;
-    for(int v : graph[u]){
-        if(!visited[v]) _DFSUtil(v, visited);
+    for(auto &edge : graph[u]){
+        int v = edge.first;
+        if(!visited[v]) {
+            _DFSUtil(v, visited);
+        }
     }
 }
 
 template<bool directed>
-void graphList<directed>::_DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack) {
+void graphListWeighted<directed>::_DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack) {
     visited[u] = true;
-    for(int v : graph[u]){
-        if(!visited[v]) _DFSUtil(v, visited, stack);
+    for(auto &edge : graph[u]){
+        int v = edge.first;
+        if(!visited[v]) {
+            _DFSUtil(v, visited, stack);
+        }
     }
     stack.push(u);
 }
 
 template<bool directed>
-void graphList<directed>::_DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component) {
+void graphListWeighted<directed>::_DFSUtil(
+    std::vector<std::vector<std::pair<int,int>>>& gr,
+    int u,
+    std::vector<bool>& visited,
+    std::vector<int>& component)
+{
     visited[u] = true;
     component.push_back(u);
-    for(int v : gr[u]){
-        if(!visited[v]) _DFSUtil(gr, v, visited, component);
+    for(auto &edge : gr[u]){
+        int v = edge.first;
+        if(!visited[v]) {
+            _DFSUtil(gr, v, visited, component);
+        }
     }
 }
 
 template<bool directed>
-std::vector<std::vector<int>> graphList<directed>::_transpose() {
+std::vector<std::vector<std::pair<int,int>>> graphListWeighted<directed>::_transpose() {
     int size = graph.size();
-    std::vector<std::vector<int>> newGraph(size);   
+    std::vector<std::vector<std::pair<int,int>>> newGraph(size);
     for (int u = 0; u < size; ++u) {
-        for (int v : graph[u]) {
-            newGraph[v].push_back(u);
+        for (auto &edge : graph[u]) {
+            int v = edge.first;
+            int w = edge.second;
+            newGraph[v].push_back({u, w});
         }
     }
     return newGraph;
 }
 
 template<bool directed>
-void graphList<directed>::transpose() {
+void graphListWeighted<directed>::transpose() {
     static_assert(directed, "transpose is not supported for undirected graphs"); 
     graph = std::move(_transpose());
 }
 
 template<bool directed>
-int graphList<directed>::getNumberOfPathsFromSrcToDst(int src, int dst) {
+int graphListWeighted<directed>::getNumberOfPathsFromSrcToDst(int src, int dst) {
     std::vector<bool> visited(graph.size(), false);
     return _countPath(src, dst, visited);
 }
 
 template<bool directed>
-int graphList<directed>::_countPath(int cur, int dst, std::vector<bool>& visited) {
+int graphListWeighted<directed>::_countPath(int cur, int dst, std::vector<bool>& visited) {
     if(cur == dst) return 1;
     int total = 0;
     visited[cur] = true;
-    for(int v : graph[cur]){
+    for(auto &edge : graph[cur]){
+        int v = edge.first;
         if(!visited[v]){
             total += _countPath(v, dst, visited);
         }
@@ -262,7 +325,7 @@ int graphList<directed>::_countPath(int cur, int dst, std::vector<bool>& visited
 }
 
 template<bool directed>
-int graphList<directed>::getNumberOfComponents(){
+int graphListWeighted<directed>::getNumberOfComponents(){
     static_assert(!directed, "getNumberOfComponents is not supported for directed graphs"); 
     int size = graph.size();
     int components {0};
@@ -277,36 +340,22 @@ int graphList<directed>::getNumberOfComponents(){
 }
 
 template<bool directed>
-void graphList<directed>::addVertex() {
-    graph.push_back({});
-}
-
-template<bool directed>
-void graphList<directed>::addEdge(int u, int v) {
-    if(u >= 0 && u < graph.size() && v >= 0 && v < graph.size()) {
-        graph[u].push_back(v);
-        if constexpr (!directed) {
-            graph[v].push_back(u);
-        }
-    }
-}
-
-template<bool directed>
-std::vector<int> graphList<directed>::getShortestPathBFS(int src, int dst){
+std::vector<int> graphListWeighted<directed>::getShortestPathBFS(int src, int dst){
     static_assert(!directed, "getShortestPathBFS is not supported for directed graphs"); 
     int size = graph.size();
+    if(src < 0 || src >= size || dst < 0 || dst >= size) return {};
     std::queue<int> q;
     std::vector<bool> visited(size, false);
     std::vector<int> parent(size, -1);
-    if(!(src >= 0 && src < size && dst >= 0 && dst < size)) return {};
+
     visited[src] = true;
     q.push(src);
     while(!q.empty()){
         int u = q.front();
         q.pop();
-
         if(u == dst) break;
-        for(auto v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             if(!visited[v]){
                 visited[v] = true;
                 parent[v] = u;
@@ -324,15 +373,17 @@ std::vector<int> graphList<directed>::getShortestPathBFS(int src, int dst){
 }
 
 template<bool directed>
-std::vector<int> graphList<directed>::getPathDFS(int src, int dest){
+std::vector<int> graphListWeighted<directed>::getPathDFS(int src, int dest){
     static_assert(!directed, "getPathDFS is not supported for directed graphs"); 
     int size = graph.size();
+    if(src < 0 || src >= size || dest < 0 || dest >= size) return {};
     std::stack<int> s;
     std::vector<bool> visited(size, false);
     std::vector<int> parent(size, -1);
     bool found = false;
     visited[src] = true;
     s.push(src);
+
     while(!s.empty() && !found){
         int u = s.top();
         s.pop();
@@ -341,7 +392,7 @@ std::vector<int> graphList<directed>::getPathDFS(int src, int dest){
             break;
         }
         for(auto it = graph[u].rbegin(); it != graph[u].rend(); ++it){
-            int v = *it;
+            int v = it->first;
             if(!visited[v]){
                 s.push(v);
                 visited[v] = true;
@@ -351,42 +402,33 @@ std::vector<int> graphList<directed>::getPathDFS(int src, int dest){
     }
     if(!found) return {};
     std::vector<int> path;
-    for (int cur = dest; cur != -1; cur = parent[cur])
+    for (int cur = dest; cur != -1; cur = parent[cur]){
         path.push_back(cur);
-    
+    }
     std::reverse(path.begin(), path.end());
     return path;
 }
 
 template<bool directed>
-void graphList<directed>::printGraph() const {
-    for (int i = 0; i < graph.size(); i++) {
-        std::cout << i << ": ";
-        for (int v : graph[i])
-            std::cout << v << " ";
-        std::cout << std::endl;
-    }
-}
-
-template<bool directed>
-int graphList<directed>::getNumberOfNodesAtAGivenLevel(int start, int levelTarget){
+int graphListWeighted<directed>::getNumberOfNodesAtAGivenLevel(int start, int levelTarget){
     int size = graph.size();
-    if(start < 0 || levelTarget < 0 || start >= size) return 0;
+    if(start < 0 || start >= size || levelTarget < 0) return 0;
     std::vector<bool> visited(size, false);
     std::queue<int> q;
     visited[start] = true;
     q.push(start);
     int currentlvl = 0;
+
     while(!q.empty() && currentlvl < levelTarget){
         int lvlsize = q.size();
         for(int i = 0; i < lvlsize; ++i){
             int u = q.front();
             q.pop();
-            for(auto v : graph[u]){
+            for(auto &edge : graph[u]){
+                int v = edge.first;
                 if(!visited[v]){
                     visited[v] = true;
                     q.push(v);
-
                 }
             }
         }
@@ -395,70 +437,177 @@ int graphList<directed>::getNumberOfNodesAtAGivenLevel(int start, int levelTarge
     return q.size();
 }
 
+
 template<bool directed>
-graphMatrix<directed>::graphMatrix(int size) {
+graphMatrixWeighted<directed>::graphMatrixWeighted(int size) {
     while(size-- > 0){
         addVertex();
     }
 }
 
 template<bool directed>
-void graphMatrix<directed>::_DFSUtil(int u, std::vector<bool>& visited) {
-    visited[u] = true;
-    for(int v : graph[u]){
-        if(!visited[v]) _DFSUtil(v, visited);
-    }
-}
-
-template<bool directed>
-void graphMatrix<directed>::_DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack) {
-    visited[u] = true;
-    for(int v : graph[u]){
-        if(!visited[v]) _DFSUtil(v, visited, stack);
-    }
-    stack.push(u);
-}
-
-template<bool directed>
-void graphMatrix<directed>::_DFSUtil(std::vector<std::vector<int>>& gr, int u, std::vector<bool>& visited, std::vector<int>& component) {
-    visited[u] = true;
-    component.push_back(u);
-    for(int v : gr[u]){
-        if(!visited[v]) _DFSUtil(gr, v, visited, component);
-    }
-}
-
-template<bool directed>
-void graphMatrix<directed>::addVertex() {
+void graphMatrixWeighted<directed>::addVertex() {
     graph.push_back({});
 }
 
 template<bool directed>
-void graphMatrix<directed>::addEdge(int u, int v) {
+void graphMatrixWeighted<directed>::addEdge(int u, int v, int w) {
     if(u >= 0 && u < graph.size() && v >= 0 && v < graph.size()) {
-        graph[u].push_back(v);
+        graph[u].push_back({v, w});
         if constexpr (!directed) {
-            graph[v].push_back(u);
+            graph[v].push_back({u, w});
         }
     }
 }
 
 template<bool directed>
-std::vector<int> graphMatrix<directed>::getShortestPathBFS(int src, int dst){
+void graphMatrixWeighted<directed>::printGraph() const {
+    for (int i = 0; i < graph.size(); i++) {
+        std::cout << i << ": ";
+        for (auto &edge : graph[i]) {
+            int v = edge.first;
+            int w = edge.second;
+            std::cout << "(" << v << ", w=" << w << ") ";
+        }
+        std::cout << std::endl;
+    }
+}
+
+template<bool directed>
+void graphMatrixWeighted<directed>::_DFSUtil(int u, std::vector<bool>& visited) {
+    visited[u] = true;
+    for(auto &edge : graph[u]){
+        int v = edge.first;
+        if(!visited[v]) {
+            _DFSUtil(v, visited);
+        }
+    }
+}
+
+template<bool directed>
+void graphMatrixWeighted<directed>::_DFSUtil(int u, std::vector<bool>& visited, std::stack<int>& stack) {
+    visited[u] = true;
+    for(auto &edge : graph[u]){
+        int v = edge.first;
+        if(!visited[v]) {
+            _DFSUtil(v, visited, stack);
+        }
+    }
+    stack.push(u);
+}
+
+template<bool directed>
+void graphMatrixWeighted<directed>::_DFSUtil(
+    std::vector<std::vector<std::pair<int,int>>>& gr,
+    int u,
+    std::vector<bool>& visited,
+    std::vector<int>& component)
+{
+    visited[u] = true;
+    component.push_back(u);
+    for(auto &edge : gr[u]){
+        int v = edge.first;
+        if(!visited[v]) {
+            _DFSUtil(gr, v, visited, component);
+        }
+    }
+}
+
+template<bool directed>
+int graphMatrixWeighted<directed>::_countPath(int cur, int dst, std::vector<bool>& visited) {
+    if(cur == dst) return 1;
+    int total = 0;
+    visited[cur] = true;
+    for(auto &edge : graph[cur]){
+        int v = edge.first;
+        if(!visited[v]){
+            total += _countPath(v, dst, visited);
+        }
+    }
+    visited[cur] = false;
+    return total;
+}
+
+template<bool directed>
+bool graphMatrixWeighted<directed>::_hasCycle(int u, int parent, std::vector<bool>& visited) {
+    visited[u] = true;
+    for(auto &edge : graph[u]){
+        int v = edge.first;
+        if(v != parent){
+            if(visited[v]) return true;
+            if(_hasCycle(v, u, visited)) return true;   
+        }
+    }
+    return false;
+}
+
+template<bool directed>
+bool graphMatrixWeighted<directed>::hasCycle() {
+    std::vector<bool> visited(graph.size(), false);
+    if(graph.empty()) return false;
+    visited[0] = true;
+    return _hasCycle(0, -1, visited);
+}
+
+template<bool directed>
+std::vector<std::vector<std::pair<int,int>>> graphMatrixWeighted<directed>::_transpose() {
+    int size = graph.size();
+    std::vector<std::vector<std::pair<int,int>>> newGraph(size);
+    for (int u = 0; u < size; ++u) {
+        for (auto &edge : graph[u]) {
+            int v = edge.first;
+            int w = edge.second;
+            newGraph[v].push_back({u, w});
+        }
+    }
+    return newGraph;
+}
+
+template<bool directed>
+void graphMatrixWeighted<directed>::transpose() {
+    static_assert(directed, "transpose is not supported for undirected graphs");
+    graph = std::move(_transpose());
+}
+
+template<bool directed>
+int graphMatrixWeighted<directed>::getNumberOfPathsFromSrcToDst(int src, int dst) {
+    std::vector<bool> visited(graph.size(), false);
+    return _countPath(src, dst, visited);
+}
+
+template<bool directed>
+int graphMatrixWeighted<directed>::getNumberOfComponents(){
+    static_assert(!directed, "getNumberOfComponents is not supported for directed graphs"); 
+    int size = graph.size();
+    int components = 0;
+    std::vector<bool> visited(size, false);
+
+    for(int i = 0; i < size; ++i){
+        if(!visited[i]){
+            ++components;
+            _DFSUtil(i, visited);
+        }
+    }
+    return components;
+}
+
+template<bool directed>
+std::vector<int> graphMatrixWeighted<directed>::getShortestPathBFS(int src, int dst){
     static_assert(!directed, "getShortestPathBFS is not supported for directed graphs"); 
     int size = graph.size();
+    if(src < 0 || src >= size || dst < 0 || dst >= size) return {};
     std::queue<int> q;
     std::vector<bool> visited(size, false);
     std::vector<int> parent(size, -1);
-    if(!(src >= 0 && src < size && dst >= 0 && dst < size)) return {};
+
     visited[src] = true;
     q.push(src);
     while(!q.empty()){
         int u = q.front();
         q.pop();
-
         if(u == dst) break;
-        for(auto v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             if(!visited[v]){
                 visited[v] = true;
                 parent[v] = u;
@@ -476,24 +625,25 @@ std::vector<int> graphMatrix<directed>::getShortestPathBFS(int src, int dst){
 }
 
 template<bool directed>
-int graphMatrix<directed>::getNumberOfNodesAtAGivenLevel(int start, int levelTarget){
+int graphMatrixWeighted<directed>::getNumberOfNodesAtAGivenLevel(int start, int levelTarget){
     int size = graph.size();
-    if(start < 0 || levelTarget < 0 || start >= size) return 0;
+    if(start < 0 || start >= size || levelTarget < 0) return 0;
     std::vector<bool> visited(size, false);
     std::queue<int> q;
     visited[start] = true;
     q.push(start);
     int currentlvl = 0;
+
     while(!q.empty() && currentlvl < levelTarget){
         int lvlsize = q.size();
         for(int i = 0; i < lvlsize; ++i){
             int u = q.front();
             q.pop();
-            for(auto v : graph[u]){
+            for(auto &edge : graph[u]){
+                int v = edge.first;
                 if(!visited[v]){
                     visited[v] = true;
                     q.push(v);
-
                 }
             }
         }
@@ -503,15 +653,17 @@ int graphMatrix<directed>::getNumberOfNodesAtAGivenLevel(int start, int levelTar
 }
 
 template<bool directed>
-std::vector<int> graphMatrix<directed>::getPathDFS(int src, int dest){
+std::vector<int> graphMatrixWeighted<directed>::getPathDFS(int src, int dest){
     static_assert(!directed, "getPathDFS is not supported for directed graphs"); 
     int size = graph.size();
+    if(src < 0 || src >= size || dest < 0 || dest >= size) return {};
     std::stack<int> s;
     std::vector<bool> visited(size, false);
     std::vector<int> parent(size, -1);
-    bool found = false;
+
     visited[src] = true;
     s.push(src);
+    bool found = false;
     while(!s.empty() && !found){
         int u = s.top();
         s.pop();
@@ -520,7 +672,7 @@ std::vector<int> graphMatrix<directed>::getPathDFS(int src, int dest){
             break;
         }
         for(auto it = graph[u].rbegin(); it != graph[u].rend(); ++it){
-            int v = *it;
+            int v = it->first;
             if(!visited[v]){
                 s.push(v);
                 visited[v] = true;
@@ -530,105 +682,24 @@ std::vector<int> graphMatrix<directed>::getPathDFS(int src, int dest){
     }
     if(!found) return {};
     std::vector<int> path;
-    for (int cur = dest; cur != -1; cur = parent[cur])
+    for (int cur = dest; cur != -1; cur = parent[cur]) {
         path.push_back(cur);
-    
+    }
     std::reverse(path.begin(), path.end());
     return path;
 }
 
 template<bool directed>
-int graphMatrix<directed>::getNumberOfComponents(){
-    static_assert(!directed, "getNumberOfComponents is not supported for directed graphs"); 
-    int size = graph.size();
-    int components {0};
-    std::vector<bool> visited(size, false);
-    for(int i = 0; i < size; ++i){
-        if(!visited[i]){
-            ++components;
-            _DFSUtil(i, visited);
-        }
-    }
-    return components;
-}
-
-template<bool directed>
-int graphMatrix<directed>::getNumberOfPathsFromSrcToDst(int src, int dst) {
-    std::vector<bool> visited(graph.size(), false);
-    return _countPath(src, dst, visited);
-}
-
-template<bool directed>
-int graphMatrix<directed>::_countPath(int cur, int dst, std::vector<bool>& visited) {
-    if(cur == dst) return 1;
-    int total = 0;
-    visited[cur] = true;
-    for(int v : graph[cur]){
-        if(!visited[v]){
-            total += _countPath(v, dst, visited);
-        }
-    }
-    visited[cur] = false;
-    return total;
-}
-
-template<bool directed>
-void graphMatrix<directed>::printGraph() const {
-    for (int i = 0; i < graph.size(); i++) {
-        std::cout << i << ": ";
-        for (int v : graph[i])
-            std::cout << v << " ";
-        std::cout << std::endl;
-    }
-}
-
-template<bool directed>
-std::vector<std::vector<int>> graphMatrix<directed>::_transpose() {
-    int size = graph.size();
-    std::vector<std::vector<int>> newGraph(size);
-    for (int u = 0; u < size; ++u) {
-        for (int v : graph[u]) {
-            newGraph[v].push_back(u);
-        }
-    }
-    return newGraph;
-}
-
-template<bool directed>
-void graphMatrix<directed>::transpose() {
-    static_assert(directed, "transpose is not supported for undirected graphs"); 
-    graph = std::move(_transpose());
-}
-
-template<bool directed>
-bool graphMatrix<directed>::_hasCycle(int u, int parent, std::vector<bool>& visited) {
-    visited[u] = true;
-    for(int v : graph[u]){
-        if(v != parent){
-            if(visited[v]) return true;
-            if(_hasCycle(v, u, visited)) return true;   
-        }
-    }
-    return false;
-}
-
-template<bool directed>
-bool graphMatrix<directed>::hasCycle() {
-    std::vector<bool> visited(graph.size(), false);
-    visited[0] = true;
-    return _hasCycle(0, -1, visited);
-}
-
-template<bool directed>
-std::vector<int> graphMatrix<directed>::topologicalSort() {
+std::vector<int> graphMatrixWeighted<directed>::topologicalSort() {
     static_assert(directed, "topologicalSort is not supported for undirected graphs"); 
     int size = graph.size();
     std::queue<int> q;
-    std::vector<int>inDegree(size, 0);
+    std::vector<int> inDegree(size, 0);
     std::vector<int> order;
     
     for(int u = 0; u < size; ++u){
-        for(int v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             ++inDegree[v];
         }
     }
@@ -643,7 +714,8 @@ std::vector<int> graphMatrix<directed>::topologicalSort() {
         q.pop();
         order.push_back(u);
 
-        for(int v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             if(--inDegree[v] == 0){
                 q.push(v);
             }
@@ -655,7 +727,7 @@ std::vector<int> graphMatrix<directed>::topologicalSort() {
 }
 
 template<bool directed>
-std::vector<std::vector<int>> graphMatrix<directed>::tarjanSCC(){
+std::vector<std::vector<int>> graphMatrixWeighted<directed>::tarjanSCC(){
     static_assert(directed, "tarjanSCC is not supported for undirected graphs"); 
     int size = graph.size();
     std::vector<bool> onStack(size, false);
@@ -670,12 +742,15 @@ std::vector<std::vector<int>> graphMatrix<directed>::tarjanSCC(){
         onStack[u] = true;
         s.push(u);
 
-        for(int v : graph[u]){
+        for(auto &edge : graph[u]){
+            int v = edge.first;
             if(index[v] == -1){
                 strongconnect(v);
                 lowLink[u] = std::min(lowLink[u], lowLink[v]);
             }
-            else if(onStack[v]) lowLink[u] = std::min(lowLink[u], index[v]);
+            else if(onStack[v]) {
+                lowLink[u] = std::min(lowLink[u], index[v]);
+            }
         }
 
         if(lowLink[u] == index[u]){
@@ -700,17 +775,18 @@ std::vector<std::vector<int>> graphMatrix<directed>::tarjanSCC(){
 }
 
 template<bool directed>
-std::vector<std::vector<int>> graphMatrix<directed>::kosarajuSCC(){
+std::vector<std::vector<int>> graphMatrixWeighted<directed>::kosarajuSCC(){
     static_assert(directed, "kosarajuSCC is not supported for undirected graphs"); 
     int size = graph.size();
     std::stack<int> s;
     std::vector<bool> visited(size, false);
 
     for(int u = 0; u < size; ++u){
-        if(!visited[u]) _DFSUtil(u, visited, s);
+        if(!visited[u]) {
+            _DFSUtil(u, visited, s);
+        }
     }
-
-    std::vector<std::vector<int>> g = _transpose();
+    auto g = _transpose();
     std::fill(visited.begin(), visited.end(), false);
     std::vector<std::vector<int>> scc;
     while(!s.empty()){
@@ -725,4 +801,4 @@ std::vector<std::vector<int>> graphMatrix<directed>::kosarajuSCC(){
     return scc;
 }
 
-#endif // GRAPH_HPP
+#endif // GRAPH_WEIGHTED_HPP
