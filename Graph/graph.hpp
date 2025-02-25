@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iostream>
 #include <stdexcept>
+#include <functional>
 
 #define DIRECTED true
 
@@ -34,7 +35,8 @@ public:
     void transpose();
     bool hasCycle();
     std::vector<int> topologicalSort();
-    std::vector<std::vector<int>> getSCCKosaraju();
+    std::vector<std::vector<int>> kosarajuSCC();
+    std::vector<std::vector<int>> tarjanSCC();
 };
 
 template<bool directed = false>
@@ -60,12 +62,58 @@ public:
     void transpose();
     bool hasCycle();
     std::vector<int> topologicalSort();
-    std::vector<std::vector<int>> getSCCKosaraju();
+    std::vector<std::vector<int>> kosarajuSCC();
+    std::vector<std::vector<int>> tarjanSCC();
 };
 
 template<bool directed>
-std::vector<std::vector<int>> graphList<directed>::getSCCKosaraju(){
-    static_assert(directed, "getSCCKosaraju is not supported for undirected graphs"); 
+std::vector<std::vector<int>> graphList<directed>::tarjanSCC(){
+    static_assert(directed, "tarjanSCC is not supported for undirected graphs"); 
+    int size = graph.size();
+    std::vector<bool> onStack(size, false);
+    std::vector<int> index(size, -1);
+    std::vector<int> lowLink(size, 0);
+    std::stack<int> s;
+    int curIndex = 0;
+    std::vector<std::vector<int>> scc;
+
+    std::function<void(int)> strongconnect = [&](int u){
+        lowLink[u] = index[u] = curIndex++;
+        onStack[u] = true;
+        s.push(u);
+
+        for(int v : graph[u]){
+            if(index[v] == -1){
+                strongconnect(v);
+                lowLink[u] = std::min(lowLink[u], lowLink[v]);
+            }
+            else if(onStack[v]) lowLink[u] = std::min(lowLink[u], index[v]);
+        }
+
+        if(lowLink[u] == index[u]){
+            std::vector<int> component;
+            int v = -1;
+            while(v != u){
+                v = s.top();
+                s.pop();
+                onStack[v] = false;
+                component.push_back(v);
+            }
+            scc.push_back(component);
+        }
+    };
+
+    for (int i = 0; i < size; ++i) {
+        if (index[i] == -1) {
+            strongconnect(i);
+        }
+    }
+    return scc;
+}
+
+template<bool directed>
+std::vector<std::vector<int>> graphList<directed>::kosarajuSCC(){
+    static_assert(directed, "kosarajuSCC is not supported for undirected graphs"); 
     int size = graph.size();
     std::stack<int> s;
     std::vector<bool> visited(size, false);
@@ -612,8 +660,53 @@ std::vector<int> graphMatrix<directed>::topologicalSort() {
 }
 
 template<bool directed>
-std::vector<std::vector<int>> graphMatrix<directed>::getSCCKosaraju(){
-    static_assert(directed, "getSCCKosaraju is not supported for undirected graphs"); 
+std::vector<std::vector<int>> graphMatrix<directed>::tarjanSCC(){
+    static_assert(directed, "tarjanSCC is not supported for undirected graphs"); 
+    int size = graph.size();
+    std::vector<bool> onStack(size, false);
+    std::vector<int> index(size, -1);
+    std::vector<int> lowLink(size, 0);
+    std::stack<int> s;
+    int curIndex = 0;
+    std::vector<std::vector<int>> scc;
+
+    std::function<void(int)> strongconnect = [&](int u){
+        lowLink[u] = index[u] = curIndex++;
+        onStack[u] = true;
+        s.push(u);
+
+        for(int v : graph[u]){
+            if(index[v] == -1){
+                strongconnect(v);
+                lowLink[u] = std::min(lowLink[u], lowLink[v]);
+            }
+            else if(onStack[v]) lowLink[u] = std::min(lowLink[u], index[v]);
+        }
+
+        if(lowLink[u] == index[u]){
+            std::vector<int> component;
+            int v = -1;
+            while(v != u){
+                v = s.top();
+                s.pop();
+                onStack[v] = false;
+                component.push_back(v);
+            }
+            scc.push_back(component);
+        }
+    };
+
+    for (int i = 0; i < size; ++i) {
+        if (index[i] == -1) {
+            strongconnect(i);
+        }
+    }
+    return scc;
+}
+
+template<bool directed>
+std::vector<std::vector<int>> graphMatrix<directed>::kosarajuSCC(){
+    static_assert(directed, "kosarajuSCC is not supported for undirected graphs"); 
     int size = graph.size();
     std::stack<int> s;
     std::vector<bool> visited(size, false);
