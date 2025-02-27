@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <iostream>
 #include <functional>
+#include <limits>
 
 #define DIRECTED true
 
@@ -40,6 +41,7 @@ public:
     std::vector<int> topologicalSort();
     std::vector<std::vector<int>> kosarajuSCC();
     std::vector<std::vector<int>> tarjanSCC();
+    std::vector<int> dijkstra(int source);
 };
 
 template<bool directed = false>
@@ -71,6 +73,7 @@ public:
     std::vector<int> topologicalSort();
     std::vector<std::vector<int>> kosarajuSCC();
     std::vector<std::vector<int>> tarjanSCC();
+    std::vector<int> dijkstra(int source);
 };
 
 template<bool directed>
@@ -106,6 +109,31 @@ void graphListWeighted<directed>::printGraph() const {
         }
         std::cout << std::endl;
     }
+}
+
+template<bool directed>
+std::vector<int> graphListWeighted<directed>::dijkstra(int source){
+    static_assert(directed, "dijkstra is not supported for undirected graphs");
+    const int INF = std::numeric_limits<int>::max();
+    int size = graph.size();
+    std::vector<int> dist(size, INF);
+    std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;
+    dist[source] = 0;
+    pq.push({0, source});
+    
+    while(!pq.empty()){
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if(d > dist[u]) continue;
+        for(const auto [v, w] : graph[u]){
+            if(dist[u] != INF && dist[u] + w < dist[v]){
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    return dist;
 }
 
 template<bool directed>
@@ -799,6 +827,31 @@ std::vector<std::vector<int>> graphMatrixWeighted<directed>::kosarajuSCC(){
         }
     }
     return scc;
+}
+
+template<bool directed>
+std::vector<int> graphMatrixWeighted<directed>::dijkstra(int source){
+    static_assert(directed, "dijkstra is not supported for undirected graphs");
+    const int INF = std::numeric_limits<int>::max();
+    int size = graph.size();
+    std::vector<int> dist(size, INF);
+    std::priority_queue<std::pair<int, int>, std::vector<std::pair<int, int>>, std::greater<std::pair<int, int>>> pq;
+    dist[source] = 0;
+    pq.push({0, source});
+    
+    while(!pq.empty()){
+        auto [d, u] = pq.top();
+        pq.pop();
+
+        if(d > dist[u]) continue;
+        for(const auto [v, w] : graph[u]){
+            if(dist[u] != INF && dist[u] + w < dist[v]){
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+    return dist;
 }
 
 #endif // GRAPH_WEIGHTED_HPP
