@@ -845,7 +845,7 @@ std::vector<int> graphMatrixWeighted<directed>::dijkstra(int source){
 
         if(d > dist[u]) continue;
         for(const auto [v, w] : graph[u]){
-            if(dist[u] != INF && dist[u] + w < dist[v]){
+            if(dist[u] + w < dist[v]){
                 dist[v] = dist[u] + w;
                 pq.push({dist[v], v});
             }
