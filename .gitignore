@@ -3,3 +3,4 @@ main
 test.sh
 sync.sh
 rbt.hpp
+.DS_Store
