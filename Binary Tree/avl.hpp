@@ -40,7 +40,7 @@ class avl {
     void clear_(node<T>* tmp);
 
 public:
-    avl() : root(nullptr), size_(0) {}
+    avl() noexcept : root(nullptr), size_(0) {}
     ~avl() { clear(); }
     void insert(const T& val); 
     void remove(const T& val);

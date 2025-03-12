@@ -21,8 +21,8 @@ class hash_map{
     size_t nextPrime(size_t current);
     unsigned long hash(const Key& key) const;
 public:
-    hash_map();
-    hash_map(size_t size_);
+    hash_map() noexcept;
+    hash_map(size_t size_) noexcept;
     ~hash_map() = default;
     Value& operator[](const Key& key);
     void insert(const Key& key, const Value& value);
@@ -33,10 +33,10 @@ public:
 };
 
 template<typename Key, typename Value>
-hash_map<Key, Value>::hash_map() : tableSize(7), table(tableSize){}
+hash_map<Key, Value>::hash_map() noexcept : tableSize(7), table(tableSize){}
 
 template<typename Key, typename Value>
-hash_map<Key, Value>::hash_map(size_t size_) : tableSize(isPrime(size_) ? size_ : nextPrime(size_)), table(tableSize){}
+hash_map<Key, Value>::hash_map(size_t size_) noexcept : tableSize(isPrime(size_) ? size_ : nextPrime(size_)), table(tableSize){}
 
 template<typename Key, typename Value>
 void hash_map<Key, Value>::insert(const Key& key, const Value& value){

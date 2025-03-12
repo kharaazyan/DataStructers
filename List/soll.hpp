@@ -57,7 +57,7 @@ private:
     void link_into_sorted(node<T>* new_node);
 
 public:
-    solist();
+    solist() noexcept;
     solist(const solist& other);            
     solist(solist&& other) noexcept;
     solist(std::initializer_list<T> init);
@@ -152,7 +152,7 @@ void solist<T>::link_into_sorted(node<T>* new_node)
 
 
 template <typename T>
-solist<T>::solist()
+solist<T>::solist() noexcept
     : head(nullptr),
       tail(nullptr),
       low(nullptr),

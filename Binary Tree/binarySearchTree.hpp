@@ -36,7 +36,7 @@ class binarySearchTree {
     void clear_(node<T>* tmp);
 
 public:
-    binarySearchTree() : root(nullptr), size_(0) {}
+    binarySearchTree() noexcept : root(nullptr), size_(0) {}
     ~binarySearchTree() { clear(); }
     void insert(const T& val); 
     void remove(const T& val);

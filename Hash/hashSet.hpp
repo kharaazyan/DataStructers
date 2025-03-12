@@ -21,8 +21,8 @@ class hash_set{
     size_t nextPrime(size_t current);
     unsigned long hash(const Key& key) const;
 public:
-    hash_set();
-    hash_set(size_t size_);
+    hash_set() noexcept;
+    hash_set(size_t size_) noexcept;
     ~hash_set() = default;
     const Key& operator[](const Key& key);
     void insert(const Key& key);
@@ -33,10 +33,10 @@ public:
 };
 
 template<typename Key>
-hash_set<Key>::hash_set() : tableSize(7), table(tableSize){}
+hash_set<Key>::hash_set() noexcept : tableSize(7), table(tableSize){}
 
 template<typename Key>
-hash_set<Key>::hash_set(size_t size_) : tableSize(isPrime(size_) ? size_ : nextPrime(size_)), table(tableSize){}
+hash_set<Key>::hash_set(size_t size_) noexcept : tableSize(isPrime(size_) ? size_ : nextPrime(size_)), table(tableSize){}
 
 template<typename Key>
 void hash_set<Key>::insert(const Key& key){

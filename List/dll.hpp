@@ -37,7 +37,7 @@ private:
     size_type size_;
 
 public:
-    dlist();
+    dlist() noexcept;
     dlist(const dlist& other);            
     dlist(dlist&& other) noexcept;
     dlist(std::initializer_list<T> init);
@@ -71,7 +71,7 @@ public:
 
 
 template <typename T>
-dlist<T>::dlist() : head(nullptr), tail(nullptr), size_(0){}
+dlist<T>::dlist() noexcept : head(nullptr), tail(nullptr), size_(0){}
 
 template<typename T>
 dlist<T>::~dlist(){

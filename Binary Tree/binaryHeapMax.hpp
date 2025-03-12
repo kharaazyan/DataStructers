@@ -13,20 +13,19 @@ class binaryHeapMax{
     int size_;
     std::vector<T> data;
 public:
-    binaryHeapMax();
+    binaryHeapMax() noexcept;
     binaryHeapMax(const binaryHeapMax<T>& other);
     binaryHeapMax(std::initializer_list<T> init);
     binaryHeapMax<T>& operator=(const binaryHeapMax<T>& other);
 
     
-    bool empty() const { return size_ == 0; }
-    size_t size(){ return size_; }
-    void clear() { data.clear(); size_ = 0;}
-
+    void push(const T& value);
     const T& top() const;
     void pop();
-    void push(const T& value);
+    void clear() { data.clear(); size_ = 0;}
     void display() const;
+    size_t size(){ return size_; }
+    bool empty() const { return size_ == 0; }
 private:
     int getLeft(int i) const;
     int getRight(int i) const;
@@ -37,7 +36,7 @@ private:
 };
 
 template<typename T>
-binaryHeapMax<T>::binaryHeapMax() : size_(0){}
+binaryHeapMax<T>::binaryHeapMax() noexcept : size_(0){}
 
 template<typename T>
 binaryHeapMax<T>::binaryHeapMax(const binaryHeapMax<T>& other){

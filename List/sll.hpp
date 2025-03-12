@@ -33,7 +33,7 @@ private:
     size_type size_;
 
 public:
-    list();
+    list() noexcept;
     list(const list& other);            
     list(list&& other) noexcept;
     list(std::initializer_list<T> init);
@@ -69,7 +69,7 @@ public:
 };
 
 template <typename T>
-list<T>::list() : head(nullptr), size_(0){}
+list<T>::list() noexcept : head(nullptr), size_(0){}
 
 template<typename T>
 list<T>::list(const list& other) : head(nullptr), size_(0){
