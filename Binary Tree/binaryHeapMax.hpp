@@ -78,7 +78,7 @@ void binaryHeapMax<T>::pop() {
     data[0] = data[size_ - 1];
     data.pop_back();
     if(--size_ > 0) heapify(0, size_);
-    return tmp; 
+    return; 
 };
 
 template<typename T>
