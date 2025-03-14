@@ -12,13 +12,19 @@ template<typename T>
 class binaryHeapMax{
     int size_;
     std::vector<T> data;
+
+    int getLeft(int i) const;
+    int getRight(int i) const;
+    int getParent(int i) const;
+    void build();
+    int start() { return (size_ / 2) - 1;}
+    void heapify(int i, int size);
 public:
     binaryHeapMax() noexcept;
     binaryHeapMax(const binaryHeapMax<T>& other);
     binaryHeapMax(std::initializer_list<T> init);
     binaryHeapMax<T>& operator=(const binaryHeapMax<T>& other);
 
-    
     void push(const T& value);
     const T& top() const;
     void pop();
@@ -26,13 +32,6 @@ public:
     void display() const;
     size_t size(){ return size_; }
     bool empty() const { return size_ == 0; }
-private:
-    int getLeft(int i) const;
-    int getRight(int i) const;
-    int getParent(int i) const;
-    void build();
-    int start() { return (size_ / 2) - 1;}
-    void heapify(int i, int size);
 };
 
 template<typename T>
